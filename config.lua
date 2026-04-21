@@ -24,12 +24,17 @@ Config.VerifiedRole = "Whitelisted" -- The Exact name of the Discord Role requir
 -- Priority Levels (Role Name = Power Level)
 -- Make sure the role name here perfectly matches your Discord Role names (capitalization doesn't matter)
 Config.PriorityLevels = {
-    -- Staff Tiers
+    -- 👑 Staff Tiers
     ["Owner"] = 1000,
     ["Developer"] = 950,
     ["Staff"] = 900,
     
-    -- Paid Tiers
+    -- 🏛️ Diplomatic Tiers (Monthly)
+    ["Ambassador"] = 890,
+    ["Embassy"] = 880,
+    ["Consulate"] = 870,
+    
+    -- 💰 Paid Support Tiers (Monthly)
     ["Elite Plus"] = 850,
     ["Elite"] = 800,
     ["Premium Plus"] = 750,
@@ -38,7 +43,7 @@ Config.PriorityLevels = {
     ["Supporter"] = 600,
     ["Basic Support"] = 550,
     
-    -- Free Tiers
+    -- ⚪ Free Tiers
     ["Whitelisted"] = 0
 }
 
