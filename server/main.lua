@@ -344,6 +344,20 @@ AddEventHandler('playerConnecting', function(name, setKickReason, deferrals)
 end)
 
 -- ============================================================
+-- PLAYER JOINED: Remove from Connecting State
+-- ============================================================
+AddEventHandler('playerJoining', function()
+    local src = source
+    local discordId = GetDiscordId(src)
+    if discordId then
+        local payload = json.encode({ discordId = discordId })
+        PerformHttpRequest(API_URL .. '/joined', function() end, 'POST', payload, {
+            ['Content-Type'] = 'application/json'
+        })
+    end
+end)
+
+-- ============================================================
 -- PLAYER DROP: Cleanup Request
 -- ============================================================
 AddEventHandler('playerDropped', function()

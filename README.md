@@ -72,6 +72,7 @@ Simply double-click the **`preview.html`** file in the bot folder to open a nati
 - `/promote @user` — Promotes a user's job tier in the game server via Discord.
 - `/kick` or `/ban` — Kicks/Bans players out of the FiveM server natively via Discord bot without needing to log in.
 - `/queueskip @user` — Instantly bypasses the queue and forces the target to Position #1 in line.
+- `/queue <action>` — Full control over the server queue natively through Discord (Enable, Disable, Restart/Clear, Status).
 
 ---
 

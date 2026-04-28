@@ -3,7 +3,7 @@ const cors = require('cors');
 
 // Internal State
 const queue = [];
-const connecting = new Set();
+const connecting = new Map();
 const grace = new Map();
 
 function getPriority(member) {
@@ -65,6 +65,9 @@ async function fetchPlayerJob(discordId) {
 function startQueueServer(client) {
     global.onlinePlayers = [];
     global.FiveMFramework = process.env.FRAMEWORK || 'auto';
+    if (global.queueEnabled === undefined) {
+        global.queueEnabled = process.env.QUEUE_ENABLED === 'true';
+    }
     const app = express();
     app.use(cors());
     app.use(express.json());
@@ -74,6 +77,9 @@ function startQueueServer(client) {
         const now = Date.now();
         grace.forEach((expiry, discordId) => {
             if (now > expiry) grace.delete(discordId);
+        });
+        connecting.forEach((expiry, discordId) => {
+            if (now > expiry) connecting.delete(discordId);
         });
     }, 60000);
 
@@ -88,8 +94,7 @@ function startQueueServer(client) {
         
         if (!discordId) return res.status(400).json({ error: 'Missing Discord ID' });
 
-        const isEnabled = process.env.QUEUE_ENABLED === 'true';
-        if (!isEnabled) {
+        if (!global.queueEnabled) {
             return res.json({ allowed: true });
         }
 
@@ -111,7 +116,7 @@ function startQueueServer(client) {
         // Check grace
         if (grace.has(discordId)) {
             grace.delete(discordId);
-            connecting.add(discordId);
+            connecting.set(discordId, Date.now() + 300000);
             return res.json({ allowed: true, grace: true });
         }
 
@@ -120,7 +125,7 @@ function startQueueServer(client) {
         const availableSlots = Math.max(0, maxSlots - currentPlayers - activeConnecting);
 
         if (availableSlots > 0 && queue.length === 0) {
-            connecting.add(discordId);
+            connecting.set(discordId, Date.now() + 300000);
             return res.json({ allowed: true }); // Go right in
         }
 
@@ -218,7 +223,7 @@ function startQueueServer(client) {
             const toAdmit = Math.min(availableSlots, queue.length);
             for (let i = 0; i < toAdmit; i++) {
                 const admitted = queue.shift();
-                connecting.add(admitted.discordId);
+                connecting.set(admitted.discordId, Date.now() + 300000);
             }
         }
         
@@ -234,10 +239,16 @@ function startQueueServer(client) {
         if (pos !== -1) queue.splice(pos, 1);
         
         // Grant grace period
-        if (process.env.QUEUE_ENABLED === 'true') {
+        if (global.queueEnabled) {
             grace.set(discordId, Date.now() + 120000); // 2 mins
         }
         
+        res.json({ success: true });
+    });
+
+    app.post('/api/queue/joined', (req, res) => {
+        const { discordId } = req.body;
+        connecting.delete(discordId);
         res.json({ success: true });
     });
 
@@ -261,4 +272,18 @@ function skipPlayer(discordId) {
     return false;
 }
 
-module.exports = { startQueueServer, skipPlayer };
+function setQueueState(state) {
+    global.queueEnabled = state;
+}
+
+function getQueueState() {
+    return global.queueEnabled;
+}
+
+function clearQueue() {
+    queue.length = 0;
+    connecting.clear();
+    grace.clear();
+}
+
+module.exports = { startQueueServer, skipPlayer, setQueueState, getQueueState, clearQueue };
